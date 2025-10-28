@@ -1,0 +1,28 @@
+.inline-buttons {
+    display: flex; 
+    gap: 1rem;
+}
+
+.flex-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.cust-max-screen-width-900 {
+    max-width: 900px;
+    margin-right: auto;
+    margin-left: auto;
+}
+
+.cust-max-screen-width-1000 {
+    max-width: 1000px;
+    margin-right: auto;
+    margin-left: auto;
+}
+
+.custom-button-padding {
+    margin-bottom: 10px;
+    margin-top: 10px;
+}
