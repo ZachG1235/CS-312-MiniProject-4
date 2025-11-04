@@ -9,9 +9,15 @@ import passport from "passport";
 import { Strategy } from "passport-local";
 import bcrypt from "bcrypt";
 
+//  i nereeed this
+
+app.use("/api", authRouter);
+
+// i brhsbgj
+
 
 const app = express();
-const port = 3000;
+const port = 5000;
 const saltRounds = 10;
 
 configDotenv('./.env');
@@ -54,9 +60,23 @@ app.get("/", async (req, res) => {
     storedData = storedData.rows;
     console.log(storedData);
     console.log(req.user || null);
-    res.render("index.ejs", {data: storedData, user_logged_in: req.isAuthenticated(), current_user: req.user || null})
+    // UPDATED FROM PROJECT 3
+    res.json({data: storedData, user_logged_in: req.isAuthenticated(), current_user: req.user || null});
+    // res.render("index.ejs", {data: storedData, user_logged_in: req.isAuthenticated(), current_user: req.user || null})
 });
  
+// get if user is logged in
+app.get("/api/auth/status", (req, res) => {
+    if (req.isAuthenticated())
+    {
+        res.json({ user_logged_in: true, user: req.user });
+    }
+    else
+    {
+        res.json({ user_logged_in: false, user: null });
+    }
+});
+
 app.post("/submit", async (req, res) => {
     let post = req.body;
     let now = new Date();
