@@ -60,8 +60,10 @@ export default function Home() {
         </div>
         <br><br>
         <h2 class="text-center">Current Blogs:</h2>
-        <%if (data.length !== 0) { %>
-            <% data.forEach(blog => { %>
+        {/* <%if (data.length !== 0) { %> */}
+        {posts.length !== 0 ? (
+            // <% data.forEach(blog => { %>
+                            
                 <div class="card text-center card-body cust-max-screen-width-1000">
                     <h3 class="card-title"><%= blog.title %></h3>
                     <h4 class="card-subtitle">Written by <i><%= blog.creator_name %></i></h4>
@@ -94,10 +96,11 @@ export default function Home() {
                     </div>
                 </div>
             <% }) %>
-        <% } else { %>
+        // <% } else { %>
+        ) : (
             <h3 class="text-center">There are no blog posts. (Try making one!)</h3>
-        <% } %>
-        <%- include('partials/footer') %>
+        // <% } %>
+        }
     </>
     );
 }
