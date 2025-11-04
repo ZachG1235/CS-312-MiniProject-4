@@ -1,9 +1,11 @@
-app.get("/api/posts", async (req, res) => {
-    try {
-        const posts = await db.query("SELECT * FROM blogs ORDER BY date_created DESC");
-        res.json({ posts });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: "Database error" });
-    }
-});
+import express from "express";
+import { getAllPosts, getPost, createPost, updatePost } from "../controllers/postsController.js";
+
+const router = express.Router();
+
+router.get("/api/posts", getAllPosts);
+router.get("/api/posts/:blogId", getPost);
+router.put("/api/edit/:blogId", updatePost);
+// router.post("/", createPost);
+
+export default router;

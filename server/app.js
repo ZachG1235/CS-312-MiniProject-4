@@ -8,17 +8,19 @@ import flash from "connect-flash";
 import passport from "passport";
 import { Strategy } from "passport-local";
 import bcrypt from "bcrypt";
+import postsRouter from "./routes/posts.js";
+import authRouter from "./routes/auth.js";
+import initializePassport from "./config/passportConfig.js";
+import cors from "cors";
 
-//  i nereeed this
-
-app.use("/api", authRouter);
-
-// i brhsbgj
 
 
 const app = express();
 const port = 5000;
 const saltRounds = 10;
+
+let is_logged_in = false;
+let current_user = {name: "", email: ""};
 
 configDotenv('./.env');
 
@@ -38,13 +40,15 @@ app.use(express.static("public"));
 app.use(session({
     secret: "BLOGDBSECRET",
     resave: false,
-    saveUninitialized: true,
+    saveUninitialized: false,
+    cookie: {
+        sameSite: "lax", secure: false
+    },
 }));
 
 app.use(flash());
 
-app.use(passport.initialize());
-app.use(passport.session());
+
 
 app.use((req, res, next) => {
     res.locals.success_msg = req.flash('success');
@@ -53,12 +57,24 @@ app.use((req, res, next) => {
     next();
 });
 
+// Project 4 middlewares
+app.use(cors({origin: "http://localhost:3000", credentials: true}));
+app.use(express.json());
+app.use(postsRouter);
+
+
+app.use(passport.initialize());
+app.use(passport.session());
+
+initializePassport(passport);
+
+app.use("/api/auth", authRouter);
 
 // --------------- ROUTING ----------------
 app.get("/", async (req, res) => {    
     let storedData = await getBlogData();
     storedData = storedData.rows;
-    console.log(storedData);
+    // console.log(storedData);
     console.log(req.user || null);
     // UPDATED FROM PROJECT 3
     res.json({data: storedData, user_logged_in: req.isAuthenticated(), current_user: req.user || null});
@@ -66,15 +82,15 @@ app.get("/", async (req, res) => {
 });
  
 // get if user is logged in
-app.get("/api/auth/status", (req, res) => {
-    if (req.isAuthenticated())
-    {
-        res.json({ user_logged_in: true, user: req.user });
-    }
-    else
-    {
-        res.json({ user_logged_in: false, user: null });
-    }
+app.get("/ap/auth/status", (req, res) => {
+    res.json({ user_logged_in: is_logged_in, user: current_user });
+});
+
+app.post("/log-in", (req, res) => {
+    is_logged_in = true;
+    const { name, email } = req.body;
+    current_user = {name: name, email: email};
+    res.json({ message: "User logged in" });
 });
 
 app.post("/submit", async (req, res) => {
@@ -100,11 +116,11 @@ app.delete("/delete/:id", async (req, res) => {
     res.redirect("/")
 });
 
-app.get("/edit/:id", async (req, res) => {
-    let current_blog = await db.query("SELECT * FROM blogs WHERE blog_id = $1", [Number(req.params.id),]);
-    console.log(current_blog.rows[0]);
-    res.render("edit.ejs", {blog_data: current_blog.rows[0], user_logged_in: req.isAuthenticated(), current_user: req.user || null})
-});
+// app.get("/edit/:id", async (req, res) => {
+//     let current_blog = await db.query("SELECT * FROM blogs WHERE blog_id = $1", [Number(req.params.id),]);
+//     console.log(current_blog.rows[0]);
+//     res.render("edit.ejs", {blog_data: current_blog.rows[0], user_logged_in: req.isAuthenticated(), current_user: req.user || null})
+// });
 
 app.put("/update/:id", async (req, res) => {
     let updated_post = req.body;
@@ -234,54 +250,58 @@ app.post("/account", async (req, res) => {
     
 });
 
-passport.use(new Strategy({usernameField: 'email', passwordField: 'password'}, async function verify(email, password, cb) {
-    console.log(email);
-    try {
-        const result = await db.query("SELECT * FROM users WHERE user_id = $1", [email,]);
-        if (result.rows.length > 0) 
-        {
-            const user = result.rows[0];
-            const storedHashedPassword = user.password;
-            bcrypt.compare(password, storedHashedPassword, (err, result) => {
-                if (err)
-                {
-                    console.error("Error comparing passwords:", err);
-                    return cb(err);
-                }
-                else
-                {
-                    if (result)
-                    {
-                        // logged in
-                        return cb(null, user);
-                    }
-                    else
-                    {
-                        // incorrect password
-                        cb(null, false, { message: "Incorrect password" });
-                    }
-                }
-            });
-        }
-        else
-        {
-            // user not found
-            return cb(null, false, { message: "User not found" });
-        }
-    }
-    catch (err) 
-    {
-        console.error("Error in Verify function:" (err));
-    }
-}));
 
-passport.serializeUser((user, cb) => {
-    cb(null, user);
-});
+// // Import Passport configuration (strategies, serialize/deserialize)
+// import "./routes/auth.js"; // make sure this file configures passport
 
-passport.deserializeUser((user, cb) => {
-    cb(null, user);
-});
+// passport.use(new Strategy({usernameField: 'email', passwordField: 'password'}, async function verify(email, password, cb) {
+//     console.log(email);
+//     try {
+//         const result = await db.query("SELECT * FROM users WHERE user_id = $1", [email,]);
+//         if (result.rows.length > 0) 
+//         {
+//             const user = result.rows[0];
+//             const storedHashedPassword = user.password;
+//             bcrypt.compare(password, storedHashedPassword, (err, result) => {
+//                 if (err)
+//                 {
+//                     console.error("Error comparing passwords:", err);
+//                     return cb(err);
+//                 }
+//                 else
+//                 {
+//                     if (result)
+//                     {
+//                         // logged in
+//                         return cb(null, user);
+//                     }
+//                     else
+//                     {
+//                         // incorrect password
+//                         cb(null, false, { message: "Incorrect password" });
+//                     }
+//                 }
+//             });
+//         }
+//         else
+//         {
+//             // user not found
+//             return cb(null, false, { message: "User not found" });
+//         }
+//     }
+//     catch (err) 
+//     {
+//         console.error("Error in Verify function:" (err));
+//     }
+// }));
+
+// passport.serializeUser((user, cb) => {
+//     cb(null, user);
+// });
+
+// passport.deserializeUser((user, cb) => {
+//     cb(null, user);
+// });
 
 async function getBlogData()
 {
